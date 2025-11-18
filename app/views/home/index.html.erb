@@ -1,0 +1,6 @@
+<h1>Please select your user:</h1>
+<%= form_with url: '#', method: :get do |form| %>
+  <%= form.label :user_id, "User:"  %>
+  <%= form.collection_select :user_id, @users, :id, :name, { prompt: "Select a user"} %>
+  <%= form.submit "Continue" %>
+<% end %>
