@@ -1,0 +1,16 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+fte_report:
+  user: one
+  report_type: fte
+  name: FTE Report 1
+
+erlang_report:
+  user: one
+  report_type: erlang
+  name: Erlang Report 1
+
+empty_report:
+  user: two
+  report_type: fte
+  name: Empty Report
