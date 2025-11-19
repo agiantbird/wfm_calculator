@@ -55,10 +55,10 @@ class ReportTest < ActiveSupport::TestCase
   test "to_csv should generate CSV with columns and rows" do
     user = User.create!(name: "Test User")
     results = {
-      "columns" => ["Name", "Value", "Status"],
+      "columns" => [ "Name", "Value", "Status" ],
       "rows" => [
-        ["Item 1", "100", "Active"],
-        ["Item 2", "200", "Inactive"]
+        [ "Item 1", "100", "Active" ],
+        [ "Item 2", "200", "Inactive" ]
       ]
     }
     report = Report.create!(user: user, report_type: "fte", results: results)
@@ -74,7 +74,7 @@ class ReportTest < ActiveSupport::TestCase
   test "to_csv should handle empty rows array" do
     user = User.create!(name: "Test User")
     results = {
-      "columns" => ["Name", "Value"],
+      "columns" => [ "Name", "Value" ],
       "rows" => []
     }
     report = Report.create!(user: user, report_type: "fte", results: results)
@@ -89,9 +89,9 @@ class ReportTest < ActiveSupport::TestCase
   test "to_csv should handle special characters in data" do
     user = User.create!(name: "Test User")
     results = {
-      "columns" => ["Name", "Description"],
+      "columns" => [ "Name", "Description" ],
       "rows" => [
-        ["Test, Item", "Description with \"quotes\""]
+        [ "Test, Item", "Description with \"quotes\"" ]
       ]
     }
     report = Report.create!(user: user, report_type: "fte", results: results)
