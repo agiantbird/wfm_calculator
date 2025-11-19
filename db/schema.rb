@@ -10,9 +10,21 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_11_18_180007) do
+ActiveRecord::Schema[7.2].define(version: 2025_11_19_154108) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
+
+  create_table "reports", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "report_type", null: false
+    t.string "name"
+    t.jsonb "parameters", default: {}
+    t.jsonb "results", default: {}
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["report_type"], name: "index_reports_on_report_type"
+    t.index ["user_id"], name: "index_reports_on_user_id"
+  end
 
   create_table "users", force: :cascade do |t|
     t.string "name"
@@ -20,4 +32,6 @@ ActiveRecord::Schema[7.2].define(version: 2025_11_18_180007) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
   end
+
+  add_foreign_key "reports", "users"
 end
