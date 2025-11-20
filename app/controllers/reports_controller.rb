@@ -36,6 +36,36 @@ class ReportsController < ApplicationController
       )
 
       redirect_to report_path(@report)
+    elsif @report_type == "erlang"
+      # Get the parameters from the form
+      call_volume = params[:call_volume].to_f
+      aht = params[:average_handling_time].to_f
+      service_level_target = params[:service_level_target].to_f / 100.0  # Convert percentage to decimal
+      target_time = params[:target_time].to_f
+
+      # Calculate traffic intensity (Erlangs)
+      traffic_intensity = (call_volume * aht) / 3600.0  # Convert AHT from seconds to hours
+
+      # Find minimum number of agents needed
+      agents_needed = calculate_erlang_agents(traffic_intensity, service_level_target, target_time, aht)
+
+      # Create the report with parameters and results
+      @report = Report.create!(
+        user: @user,
+        report_type: @report_type,
+        parameters: {
+          call_volume: call_volume,
+          average_handling_time: aht,
+          service_level_target: service_level_target * 100,  # Store as percentage
+          target_time: target_time
+        },
+        results: {
+          agents_needed: agents_needed,
+          traffic_intensity: traffic_intensity
+        }
+      )
+
+      redirect_to report_path(@report)
     else
       redirect_to root_path, alert: "Invalid report type"
     end
@@ -43,5 +73,73 @@ class ReportsController < ApplicationController
 
   def show
     @report = Report.find(params[:id])
+  end
+
+  private
+
+  # Calculate minimum number of agents needed for Erlang C model
+  def calculate_erlang_agents(traffic_intensity, service_level_target, target_time, aht)
+    # Start with minimum agents = ceiling of traffic intensity
+    agents = traffic_intensity.ceil
+    max_agents = (traffic_intensity * 3).ceil  # Safety limit
+
+    # Iterate to find minimum agents that meet service level
+    while agents <= max_agents
+      service_level = calculate_service_level(traffic_intensity, agents, target_time, aht)
+
+      if service_level >= service_level_target
+        return agents
+      end
+
+      agents += 1
+    end
+
+    # If we couldn't find a solution, return the max we tried
+    agents
+  end
+
+  # Calculate service level for given parameters
+  def calculate_service_level(traffic_intensity, agents, target_time, aht)
+    # Calculate Erlang C (probability of delay)
+    prob_delay = erlang_c(traffic_intensity, agents)
+
+    # Calculate probability call is answered within target time
+    # Formula: 1 - (Prob_Delay * e^(-(agents - traffic) * target_time / AHT))
+    agent_surplus = agents - traffic_intensity
+    return 0.0 if agent_surplus <= 0
+
+    exponential_term = Math.exp(-(agent_surplus * target_time) / aht)
+    service_level = 1.0 - (prob_delay * exponential_term)
+
+    service_level
+  end
+
+  # Erlang C formula: probability of delay
+  def erlang_c(traffic_intensity, agents)
+    return 1.0 if agents <= traffic_intensity
+
+    # Calculate Erlang B first
+    erlang_b = erlang_b_value(traffic_intensity, agents)
+
+    # Erlang C formula
+    numerator = agents * erlang_b
+    denominator = agents - traffic_intensity * (1 - erlang_b)
+
+    return 0.0 if denominator <= 0
+
+    numerator / denominator
+  end
+
+  # Calculate Erlang B (used in Erlang C calculation)
+  def erlang_b_value(traffic_intensity, agents)
+    return 1.0 if agents == 0
+
+    erlang_b = 1.0
+
+    (1..agents).each do |n|
+      erlang_b = (traffic_intensity * erlang_b) / (n + traffic_intensity * erlang_b)
+    end
+
+    erlang_b
   end
 end

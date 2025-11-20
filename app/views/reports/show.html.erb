@@ -23,9 +23,35 @@
   <p><strong>You will need <%= @report.results["fte_needed"].round(2) %> Full-Time Employees</strong></p>
 
 <% elsif @report.report_type == "erlang" %>
-  <h1>Erlang Report Results</h1>
+  <h1>Erlang C Staffing Model Results</h1>
   <p>User: <%= @report.user.name %></p>
-  <!-- Erlang results will go here -->
+
+  <div style="background-color: #f0f0f0; padding: 15px; margin-bottom: 20px; border-radius: 5px;">
+    <h3>How Erlang C is Calculated:</h3>
+    <p>
+      <strong>The Erlang C model calculates the minimum number of agents needed to meet your service level target.</strong>
+    </p>
+    <p>
+      The formula considers call volume, average handling time, and finds the smallest number of agents where:<br>
+      <em>(1 − Probability of Delay × e^(−(Agent Surplus × Target Time ÷ AHT))) ≥ Service Level Target</em>
+    </p>
+    <p>
+      This ensures that the specified percentage of calls are answered within your target time.
+    </p>
+  </div>
+
+  <h2>Parameters:</h2>
+  <ul>
+    <li>Call volume: <%= @report.parameters["call_volume"] %> calls per hour</li>
+    <li>Average Handling Time (AHT): <%= @report.parameters["average_handling_time"] %> seconds</li>
+    <li>Service Level Target: <%= @report.parameters["service_level_target"] %>%</li>
+    <li>Target Time: <%= @report.parameters["target_time"] %> seconds</li>
+  </ul>
+
+  <h2>Results:</h2>
+  <p><strong>You will need <%= @report.results["agents_needed"] %> Agents</strong></p>
+  <p>Traffic Intensity: <%= @report.results["traffic_intensity"].round(2) %> Erlangs</p>
+
 <% end %>
 
 <%= link_to "Back to Home", root_path %>

@@ -37,9 +37,53 @@
   <% end %>
 
 <% elsif @report_type == "erlang" %>
-  <h1>Erlang Formula Report</h1>
+  <h1>Erlang C Staffing Model Report</h1>
   <p>User: <%= @user.name %></p>
-  <!-- Parameter form will go here -->
+
+  <div style="background-color: #f0f0f0; padding: 15px; margin-bottom: 20px; border-radius: 5px;">
+    <h3>How Erlang C is Calculated:</h3>
+    <p>
+      <strong>The Erlang C model calculates the minimum number of agents needed to meet your service level target.</strong>
+    </p>
+    <p>
+      The formula considers call volume, average handling time, and finds the smallest number of agents where:<br>
+      <em>(1 − Probability of Delay × e^(−(Agent Surplus × Target Time ÷ AHT))) ≥ Service Level Target</em>
+    </p>
+    <p>
+      This ensures that the specified percentage of calls are answered within your target time.
+    </p>
+  </div>
+
+  <%= form_with url: reports_path, method: :post do |form| %>
+    <%= form.hidden_field :user_id, value: @user.id %>
+    <%= form.hidden_field :report_type, value: @report_type %>
+
+    <div>
+      <%= form.label :call_volume, "Call volume (calls per hour):" %>
+      <%= form.number_field :call_volume, step: :any, required: true %>
+    </div>
+
+    <div>
+      <%= form.label :average_handling_time, "Average Handling Time (AHT) in seconds:" %>
+      <%= form.number_field :average_handling_time, step: :any, required: true %>
+    </div>
+
+    <div>
+      <%= form.label :service_level_target, "Service Level Target (%):" %>
+      <%= form.number_field :service_level_target, step: :any, required: true, placeholder: "e.g., 80" %>
+      <small style="display: block; color: #666;">Enter as percentage (e.g., 80 for 80%)</small>
+    </div>
+
+    <div>
+      <%= form.label :target_time, "Target Time (seconds):" %>
+      <%= form.number_field :target_time, step: :any, required: true, placeholder: "e.g., 20" %>
+      <small style="display: block; color: #666;">Time within which calls should be answered</small>
+    </div>
+
+    <div>
+      <%= form.submit "Calculate Staffing Requirements" %>
+    </div>
+  <% end %>
 
 <% end %>
 
