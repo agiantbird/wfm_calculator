@@ -22,6 +22,69 @@
   <h2>Result:</h2>
   <p><strong>You will need <%= @report.results["fte_needed"].round(2) %> Full-Time Employees</strong></p>
 
+  <h2>Scenario Analysis:</h2>
+  <p>This table shows how many agents would be needed if your parameters change. Each column shows the impact of changing one parameter in isolation, plus a combined scenario where all parameters scale together.</p>
+
+  <%
+    # Extract baseline parameters
+    incoming_requests = @report.parameters["incoming_requests_per_hour"].to_f
+    resolution_time = @report.parameters["average_resolution_time"].to_f
+    requests_per_employee = @report.parameters["requests_per_employee_per_hour"].to_f
+
+    # Define multipliers
+    multipliers = [0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5]
+  %>
+
+  <div style="overflow-x: auto; margin-bottom: 20px;">
+    <table style="border-collapse: collapse; width: 100%; min-width: 1000px;">
+      <thead>
+        <tr style="background-color: #4CAF50; color: white;">
+          <th style="border: 1px solid #ddd; padding: 12px; text-align: center;">Multiplier</th>
+          <th style="border: 1px solid #ddd; padding: 12px; text-align: center;">Incoming Requests Only<br><span style="font-weight: normal; font-size: 0.9em;">(others constant)</span></th>
+          <th style="border: 1px solid #ddd; padding: 12px; text-align: center;">Resolution Time Only<br><span style="font-weight: normal; font-size: 0.9em;">(others constant)</span></th>
+          <th style="border: 1px solid #ddd; padding: 12px; text-align: center;">Productivity Only<br><span style="font-weight: normal; font-size: 0.9em;">(others constant)</span></th>
+          <th style="border: 1px solid #ddd; padding: 12px; text-align: center;">Request & Resolution<br><span style="font-weight: normal; font-size: 0.9em;">(productivity constant)</span></th>
+          <th style="border: 1px solid #ddd; padding: 12px; text-align: center;">Request, Resolution, & Productivity</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% multipliers.each do |mult| %>
+          <%
+            # Calculate FTE for each scenario
+            fte_requests = (incoming_requests * mult * resolution_time) / requests_per_employee
+            fte_resolution = (incoming_requests * resolution_time * mult) / requests_per_employee
+            fte_productivity = (incoming_requests * resolution_time) / (requests_per_employee * mult)
+            fte_request_resolution = (incoming_requests * mult * resolution_time * mult) / requests_per_employee
+            fte_all_combined = (incoming_requests * mult * resolution_time * mult) / (requests_per_employee * mult)
+
+            # Highlight baseline row
+            row_style = mult == 1 ? "background-color: #ffffcc; font-weight: bold;" : ""
+          %>
+          <tr style="<%= row_style %>">
+            <td style="border: 1px solid #ddd; padding: 10px; text-align: center;"><%= mult %>x</td>
+            <td style="border: 1px solid #ddd; padding: 10px; text-align: center;"><%= fte_requests.round(2) %></td>
+            <td style="border: 1px solid #ddd; padding: 10px; text-align: center;"><%= fte_resolution.round(2) %></td>
+            <td style="border: 1px solid #ddd; padding: 10px; text-align: center;"><%= fte_productivity.round(2) %></td>
+            <td style="border: 1px solid #ddd; padding: 10px; text-align: center;"><%= fte_request_resolution.round(2) %></td>
+            <td style="border: 1px solid #ddd; padding: 10px; text-align: center;"><%= fte_all_combined.round(2) %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+
+  <div style="background-color: #e7f3fe; padding: 15px; margin-bottom: 20px; border-radius: 5px; border-left: 4px solid #2196F3;">
+    <h4 style="margin-top: 0;">Understanding the Table:</h4>
+    <ul style="margin-bottom: 0;">
+      <li><strong>Incoming Requests Only:</strong> Shows FTE needed if request volume changes (e.g., 2x = double the requests)</li>
+      <li><strong>Resolution Time Only:</strong> Shows FTE needed if handling time changes (e.g., 2x = requests take twice as long)</li>
+      <li><strong>Productivity Only:</strong> Shows FTE needed if employee efficiency changes (e.g., 2x = employees complete twice as many requests/hour)</li>
+      <li><strong>Request & Resolution:</strong> Shows FTE needed if both requests and resolution time scale together (productivity stays constant)</li>
+      <li><strong>Request, Resolution, & Productivity:</strong> Shows FTE needed if all three factors scale together by the same amount</li>
+      <li><strong>Yellow row (1x):</strong> Your baseline scenario with current parameters</li>
+    </ul>
+  </div>
+
 <% elsif @report.report_type == "erlang" %>
   <h1>Erlang C Staffing Model Results</h1>
   <p>User: <%= @report.user.name %></p>
@@ -54,4 +117,9 @@
 
 <% end %>
 
-<%= link_to "Back to Home", root_path %>
+<div style="margin: 20px 0;">
+  <% if @report.report_type == "fte" %>
+    <%= link_to "Export as CSV", export_csv_report_path(@report), style: "display: inline-block; background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; margin-right: 10px;" %>
+  <% end %>
+  <%= link_to "Back to Home", root_path %>
+</div>

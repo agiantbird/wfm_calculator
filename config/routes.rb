@@ -1,7 +1,11 @@
 Rails.application.routes.draw do
   root "home#index"
 
-  resources :reports, only: [ :new, :create, :show ]
+  resources :reports, only: [ :new, :create, :show ] do
+    member do
+      get :export_csv
+    end
+  end
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.
