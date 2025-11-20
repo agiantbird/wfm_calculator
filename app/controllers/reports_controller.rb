@@ -142,76 +142,97 @@ class ReportsController < ApplicationController
 
       # Send CSV file
       send_data csv_data, filename: filename, type: "text/csv"
+    elsif @report.report_type == "erlang"
+      # Extract parameters
+      call_volume = @report.parameters["call_volume"].to_f
+      aht = @report.parameters["average_handling_time"].to_f
+      service_level_target = @report.parameters["service_level_target"].to_f
+      target_time = @report.parameters["target_time"].to_f
+
+      # Generate CSV
+      csv_data = CSV.generate(headers: true) do |csv|
+        # Header information
+        csv << [ "Erlang C Staffing Model Report" ]
+        csv << [ "User", @report.user.name ]
+        csv << [ "Date", Date.today.strftime("%Y-%m-%d") ]
+        csv << []
+
+        # Parameters section
+        csv << [ "Parameters:" ]
+        csv << [ "Call volume (calls per hour)", call_volume ]
+        csv << [ "Average Handling Time (seconds)", aht ]
+        csv << [ "Service Level Target (%)", service_level_target ]
+        csv << [ "Target Time (seconds)", target_time ]
+        csv << []
+
+        # Baseline result
+        csv << [ "Baseline Result:" ]
+        csv << [ "Agents Needed", @report.results["agents_needed"] ]
+        csv << [ "Traffic Intensity (Erlangs)", @report.results["traffic_intensity"].round(2) ]
+        csv << []
+
+        # Scenario Analysis Table
+        csv << [ "Scenario Analysis:" ]
+        csv << [
+          "Multiplier",
+          "Call Volume Only (others constant)",
+          "Avg Handling Time Only (others constant)",
+          "Service Level Target Only (others constant)",
+          "Target Time Only (others constant)",
+          "All Combined"
+        ]
+
+        # Calculate scenarios for each multiplier
+        multipliers = [ 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5 ]
+        step_size = (100.0 - service_level_target) / 8.0
+
+        multipliers.each_with_index do |mult, index|
+          # Calculate service level target for this row
+          if mult == 0.5
+            sl_target_for_row = [ service_level_target - 5, 0 ].max
+          elsif mult == 1
+            sl_target_for_row = service_level_target
+          else
+            step_number = index - 1
+            sl_target_for_row = [ service_level_target + (step_size * step_number), 100 ].min
+          end
+
+          # Calculate traffic intensity for each scenario
+          traffic_call_volume = (call_volume * mult * aht) / 3600.0
+          traffic_aht = (call_volume * aht * mult) / 3600.0
+          traffic_baseline = (call_volume * aht) / 3600.0
+          traffic_combined = (call_volume * mult * aht * mult) / 3600.0
+
+          # Calculate agents for each scenario
+          agents_call_volume = calculate_erlang_agents(traffic_call_volume, service_level_target / 100.0, target_time, aht)
+          agents_aht = calculate_erlang_agents(traffic_aht, service_level_target / 100.0, target_time, aht * mult)
+          agents_sl_target = calculate_erlang_agents(traffic_baseline, sl_target_for_row / 100.0, target_time, aht)
+          agents_target_time = calculate_erlang_agents(traffic_baseline, service_level_target / 100.0, target_time * mult, aht)
+          agents_combined = calculate_erlang_agents(traffic_combined, sl_target_for_row / 100.0, target_time * mult, aht * mult)
+
+          csv << [
+            "#{mult}x",
+            agents_call_volume,
+            agents_aht,
+            "#{agents_sl_target} (SL: #{sl_target_for_row.round(1)}%)",
+            agents_target_time,
+            agents_combined
+          ]
+        end
+      end
+
+      # Generate filename
+      filename = "Erlang C Staffing Model Report by #{@report.user.name} on #{Date.today.strftime('%Y-%m-%d')}.csv"
+
+      # Send CSV file
+      send_data csv_data, filename: filename, type: "text/csv"
     else
-      redirect_to report_path(@report), alert: "CSV export is only available for FTE reports"
+      redirect_to report_path(@report), alert: "CSV export is not available for this report type"
     end
   end
 
   private
 
-  # Calculate minimum number of agents needed for Erlang C model
-  def calculate_erlang_agents(traffic_intensity, service_level_target, target_time, aht)
-    # Start with minimum agents = ceiling of traffic intensity
-    agents = traffic_intensity.ceil
-    max_agents = (traffic_intensity * 3).ceil  # Safety limit
-
-    # Iterate to find minimum agents that meet service level
-    while agents <= max_agents
-      service_level = calculate_service_level(traffic_intensity, agents, target_time, aht)
-
-      if service_level >= service_level_target
-        return agents
-      end
-
-      agents += 1
-    end
-
-    # If we couldn't find a solution, return the max we tried
-    agents
-  end
-
-  # Calculate service level for given parameters
-  def calculate_service_level(traffic_intensity, agents, target_time, aht)
-    # Calculate Erlang C (probability of delay)
-    prob_delay = erlang_c(traffic_intensity, agents)
-
-    # Calculate probability call is answered within target time
-    # Formula: 1 - (Prob_Delay * e^(-(agents - traffic) * target_time / AHT))
-    agent_surplus = agents - traffic_intensity
-    return 0.0 if agent_surplus <= 0
-
-    exponential_term = Math.exp(-(agent_surplus * target_time) / aht)
-    service_level = 1.0 - (prob_delay * exponential_term)
-
-    service_level
-  end
-
-  # Erlang C formula: probability of delay
-  def erlang_c(traffic_intensity, agents)
-    return 1.0 if agents <= traffic_intensity
-
-    # Calculate Erlang B first
-    erlang_b = erlang_b_value(traffic_intensity, agents)
-
-    # Erlang C formula
-    numerator = agents * erlang_b
-    denominator = agents - traffic_intensity * (1 - erlang_b)
-
-    return 0.0 if denominator <= 0
-
-    numerator / denominator
-  end
-
-  # Calculate Erlang B (used in Erlang C calculation)
-  def erlang_b_value(traffic_intensity, agents)
-    return 1.0 if agents == 0
-
-    erlang_b = 1.0
-
-    (1..agents).each do |n|
-      erlang_b = (traffic_intensity * erlang_b) / (n + traffic_intensity * erlang_b)
-    end
-
-    erlang_b
-  end
+  # Include helper methods for Erlang calculations
+  include ApplicationHelper
 end

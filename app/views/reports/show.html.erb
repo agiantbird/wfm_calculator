@@ -115,11 +115,96 @@
   <p><strong>You will need <%= @report.results["agents_needed"] %> Agents</strong></p>
   <p>Traffic Intensity: <%= @report.results["traffic_intensity"].round(2) %> Erlangs</p>
 
+  <h2>Scenario Analysis:</h2>
+  <p>This table shows how many agents would be needed if your parameters change. Each column shows the impact of changing one parameter in isolation, plus a combined scenario where all parameters scale together.</p>
+
+  <%
+    # Extract baseline parameters
+    call_volume = @report.parameters["call_volume"].to_f
+    aht = @report.parameters["average_handling_time"].to_f
+    service_level_target = @report.parameters["service_level_target"].to_f
+    target_time = @report.parameters["target_time"].to_f
+
+    # Define multipliers
+    multipliers = [0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5]
+
+    # Calculate service level target increments
+    # For 0.5x: baseline - 5
+    # For 1x: baseline
+    # For remaining rows (1.5x to 5x): incremental steps from baseline to 100
+    step_size = (100.0 - service_level_target) / 8.0
+  %>
+
+  <div style="overflow-x: auto; margin-bottom: 20px;">
+    <table style="border-collapse: collapse; width: 100%; min-width: 1000px;">
+      <thead>
+        <tr style="background-color: #4CAF50; color: white;">
+          <th style="border: 1px solid #ddd; padding: 12px; text-align: center;">Multiplier</th>
+          <th style="border: 1px solid #ddd; padding: 12px; text-align: center;">Call Volume Only<br><span style="font-weight: normal; font-size: 0.9em;">(others constant)</span></th>
+          <th style="border: 1px solid #ddd; padding: 12px; text-align: center;">Avg Handling Time Only<br><span style="font-weight: normal; font-size: 0.9em;">(others constant)</span></th>
+          <th style="border: 1px solid #ddd; padding: 12px; text-align: center;">Service Level Target Only<br><span style="font-weight: normal; font-size: 0.9em;">(others constant)</span></th>
+          <th style="border: 1px solid #ddd; padding: 12px; text-align: center;">Target Time Only<br><span style="font-weight: normal; font-size: 0.9em;">(others constant)</span></th>
+          <th style="border: 1px solid #ddd; padding: 12px; text-align: center;">All Combined</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% multipliers.each_with_index do |mult, index| %>
+          <%
+            # Calculate service level target for this row
+            if mult == 0.5
+              sl_target_for_row = [service_level_target - 5, 0].max  # Reduced by 5, minimum 0
+            elsif mult == 1
+              sl_target_for_row = service_level_target  # Baseline
+            else
+              # Incremental steps from baseline to 100
+              step_number = index - 1  # Steps start from 1.5x (index 2), so step 1
+              sl_target_for_row = [service_level_target + (step_size * step_number), 100].min  # Maximum 100
+            end
+
+            # Calculate traffic intensity for each scenario
+            traffic_call_volume = (call_volume * mult * aht) / 3600.0
+            traffic_aht = (call_volume * aht * mult) / 3600.0
+            traffic_baseline = (call_volume * aht) / 3600.0
+            traffic_combined = (call_volume * mult * aht * mult) / 3600.0
+
+            # Calculate agents for each scenario using helper methods
+            agents_call_volume = calculate_erlang_agents(traffic_call_volume, service_level_target / 100.0, target_time, aht)
+            agents_aht = calculate_erlang_agents(traffic_aht, service_level_target / 100.0, target_time, aht * mult)
+            agents_sl_target = calculate_erlang_agents(traffic_baseline, sl_target_for_row / 100.0, target_time, aht)
+            agents_target_time = calculate_erlang_agents(traffic_baseline, service_level_target / 100.0, target_time * mult, aht)
+            agents_combined = calculate_erlang_agents(traffic_combined, sl_target_for_row / 100.0, target_time * mult, aht * mult)
+
+            # Highlight baseline row
+            row_style = mult == 1 ? "background-color: #ffffcc; font-weight: bold;" : ""
+          %>
+          <tr style="<%= row_style %>">
+            <td style="border: 1px solid #ddd; padding: 10px; text-align: center;"><%= mult %>x</td>
+            <td style="border: 1px solid #ddd; padding: 10px; text-align: center;"><%= agents_call_volume %></td>
+            <td style="border: 1px solid #ddd; padding: 10px; text-align: center;"><%= agents_aht %></td>
+            <td style="border: 1px solid #ddd; padding: 10px; text-align: center;"><%= agents_sl_target %> <span style="color: #666; font-size: 0.85em;">(SL: <%= sl_target_for_row.round(1) %>%)</span></td>
+            <td style="border: 1px solid #ddd; padding: 10px; text-align: center;"><%= agents_target_time %></td>
+            <td style="border: 1px solid #ddd; padding: 10px; text-align: center;"><%= agents_combined %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+
+  <div style="background-color: #e7f3fe; padding: 15px; margin-bottom: 20px; border-radius: 5px; border-left: 4px solid #2196F3;">
+    <h4 style="margin-top: 0;">Understanding the Table:</h4>
+    <ul style="margin-bottom: 0;">
+      <li><strong>Call Volume Only:</strong> Shows agents needed if call volume changes (e.g., 2x = double the calls)</li>
+      <li><strong>Avg Handling Time Only:</strong> Shows agents needed if handling time changes (e.g., 2x = calls take twice as long)</li>
+      <li><strong>Service Level Target Only:</strong> Shows agents needed if service level target changes (0.5x = baseline - 5%, 1x = baseline, 1.5x+ = incremental steps to 100%)</li>
+      <li><strong>Target Time Only:</strong> Shows agents needed if target answer time changes (e.g., 2x = twice as much time to answer)</li>
+      <li><strong>All Combined:</strong> Shows agents needed if call volume, AHT, service level target, and target time all scale together</li>
+      <li><strong>Yellow row (1x):</strong> Your baseline scenario with current parameters</li>
+    </ul>
+  </div>
+
 <% end %>
 
 <div style="margin: 20px 0;">
-  <% if @report.report_type == "fte" %>
-    <%= link_to "Export as CSV", export_csv_report_path(@report), style: "display: inline-block; background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; margin-right: 10px;" %>
-  <% end %>
+  <%= link_to "Export as CSV", export_csv_report_path(@report), style: "display: inline-block; background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; margin-right: 10px;" %>
   <%= link_to "Back to Home", root_path %>
 </div>

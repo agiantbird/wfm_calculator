@@ -411,7 +411,7 @@ class ReportsControllerTest < ActionDispatch::IntegrationTest
     assert_match(/5x/, csv_content)
   end
 
-  test "should not export Erlang report as CSV" do
+  test "should export Erlang report as CSV" do
     user = users(:one)
 
     post reports_url, params: {
@@ -426,8 +426,29 @@ class ReportsControllerTest < ActionDispatch::IntegrationTest
     report = Report.last
     get export_csv_report_url(report)
 
-    assert_redirected_to report_path(report)
-    assert_equal "CSV export is only available for FTE reports", flash[:alert]
+    assert_response :success
+    assert_equal "text/csv", response.content_type
+    assert_match(/Erlang C Staffing Model Report/, response.body)
+    assert_match(/Call volume/, response.body)
+    assert_match(/Average Handling Time/, response.body)
+    assert_match(/Service Level Target/, response.body)
+    assert_match(/Target Time/, response.body)
+    assert_match(/Agents Needed/, response.body)
+    assert_match(/Traffic Intensity/, response.body)
+
+    # Check for scenario analysis headers
+    assert_match(/Scenario Analysis/, response.body)
+    assert_match(/Call Volume Only/, response.body)
+    assert_match(/Avg Handling Time Only/, response.body)
+    assert_match(/Service Level Target Only/, response.body)
+    assert_match(/Target Time Only/, response.body)
+    assert_match(/All Combined/, response.body)
+
+    # Check for multipliers
+    assert_match(/0.5x/, response.body)
+    assert_match(/1x/, response.body)
+    assert_match(/2x/, response.body)
+    assert_match(/5x/, response.body)
   end
 
   # Erlang C Tests
