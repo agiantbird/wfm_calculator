@@ -1,7 +1,40 @@
 <% if @report_type == "fte" %>
   <h1>Full Time Employee (FTE) Report</h1>
   <p>User: <%= @user.name %></p>
-  <!-- Parameter form will go here -->
+
+  <div style="background-color: #f0f0f0; padding: 15px; margin-bottom: 20px; border-radius: 5px;">
+    <h3>How FTE is Calculated:</h3>
+    <p>
+      <strong>FTE Needed = (Incoming Requests per Hour × Average Resolution Time) ÷ Requests Completed per Employee per Hour</strong>
+    </p>
+    <p>
+      This formula calculates the number of full-time employees needed to handle your support workload based on request volume, resolution time, and employee productivity.
+    </p>
+  </div>
+
+  <%= form_with url: reports_path, method: :post do |form| %>
+    <%= form.hidden_field :user_id, value: @user.id %>
+    <%= form.hidden_field :report_type, value: @report_type %>
+
+    <div>
+      <%= form.label :incoming_requests_per_hour, "Incoming requests per hour:" %>
+      <%= form.number_field :incoming_requests_per_hour, step: :any, required: true %>
+    </div>
+
+    <div>
+      <%= form.label :average_resolution_time, "Average resolution time per support request (in hours):" %>
+      <%= form.number_field :average_resolution_time, step: :any, required: true %>
+    </div>
+
+    <div>
+      <%= form.label :requests_per_employee_per_hour, "Average number of requests completed per employee per hour:" %>
+      <%= form.number_field :requests_per_employee_per_hour, step: :any, required: true %>
+    </div>
+
+    <div>
+      <%= form.submit "Calculate FTE" %>
+    </div>
+  <% end %>
 
 <% elsif @report_type == "erlang" %>
   <h1>Erlang Formula Report</h1>

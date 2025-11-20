@@ -1,0 +1,31 @@
+<% if @report.report_type == "fte" %>
+  <h1>FTE Report Results</h1>
+  <p>User: <%= @report.user.name %></p>
+
+  <div style="background-color: #f0f0f0; padding: 15px; margin-bottom: 20px; border-radius: 5px;">
+    <h3>How FTE is Calculated:</h3>
+    <p>
+      <strong>FTE Needed = (Incoming Requests per Hour × Average Resolution Time) ÷ Requests Completed per Employee per Hour</strong>
+    </p>
+    <p>
+      This formula calculates the number of full-time employees needed to handle your support workload based on request volume, resolution time, and employee productivity.
+    </p>
+  </div>
+
+  <h2>Parameters:</h2>
+  <ul>
+    <li>Incoming requests per hour: <%= @report.parameters["incoming_requests_per_hour"] %></li>
+    <li>Average resolution time per support request: <%= @report.parameters["average_resolution_time"] %> hours</li>
+    <li>Requests completed per employee per hour: <%= @report.parameters["requests_per_employee_per_hour"] %></li>
+  </ul>
+
+  <h2>Result:</h2>
+  <p><strong>You will need <%= @report.results["fte_needed"].round(2) %> Full-Time Employees</strong></p>
+
+<% elsif @report.report_type == "erlang" %>
+  <h1>Erlang Report Results</h1>
+  <p>User: <%= @report.user.name %></p>
+  <!-- Erlang results will go here -->
+<% end %>
+
+<%= link_to "Back to Home", root_path %>

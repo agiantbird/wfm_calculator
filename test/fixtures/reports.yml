@@ -4,6 +4,8 @@ fte_report:
   user: one
   report_type: fte
   name: FTE Report 1
+  parameters: { "incoming_requests_per_hour": 100, "average_resolution_time": 0.5, "requests_per_employee_per_hour": 5 }
+  results: { "fte_needed": 10.0 }
 
 erlang_report:
   user: one

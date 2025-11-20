@@ -100,4 +100,80 @@ class ReportTest < ActiveSupport::TestCase
     assert_includes csv_output, "\"Test, Item\""
     assert_includes csv_output, "\"Description with \"\"quotes\"\"\""
   end
+
+  test "should store FTE parameters correctly" do
+    user = User.create!(name: "Test User")
+    parameters = {
+      incoming_requests_per_hour: 100,
+      average_resolution_time: 0.5,
+      requests_per_employee_per_hour: 5
+    }
+    report = Report.create!(
+      user: user,
+      report_type: "fte",
+      parameters: parameters
+    )
+
+    assert_equal 100, report.parameters["incoming_requests_per_hour"]
+    assert_equal 0.5, report.parameters["average_resolution_time"]
+    assert_equal 5, report.parameters["requests_per_employee_per_hour"]
+  end
+
+  test "should store FTE results correctly" do
+    user = User.create!(name: "Test User")
+    results = { fte_needed: 10.5 }
+    report = Report.create!(
+      user: user,
+      report_type: "fte",
+      results: results
+    )
+
+    assert_equal 10.5, report.results["fte_needed"]
+  end
+
+  test "should store both FTE parameters and results" do
+    user = User.create!(name: "Test User")
+    parameters = {
+      incoming_requests_per_hour: 75,
+      average_resolution_time: 1.2,
+      requests_per_employee_per_hour: 4
+    }
+    results = { fte_needed: 22.5 }
+
+    report = Report.create!(
+      user: user,
+      report_type: "fte",
+      parameters: parameters,
+      results: results
+    )
+
+    assert_equal 75, report.parameters["incoming_requests_per_hour"]
+    assert_equal 1.2, report.parameters["average_resolution_time"]
+    assert_equal 4, report.parameters["requests_per_employee_per_hour"]
+    assert_equal 22.5, report.results["fte_needed"]
+  end
+
+  test "should handle FTE report with zero result" do
+    user = User.create!(name: "Test User")
+    results = { fte_needed: 0.0 }
+    report = Report.create!(
+      user: user,
+      report_type: "fte",
+      results: results
+    )
+
+    assert_equal 0.0, report.results["fte_needed"]
+  end
+
+  test "should handle FTE report with fractional result" do
+    user = User.create!(name: "Test User")
+    results = { fte_needed: 3.14159 }
+    report = Report.create!(
+      user: user,
+      report_type: "fte",
+      results: results
+    )
+
+    assert_equal 3.14159, report.results["fte_needed"]
+  end
 end
