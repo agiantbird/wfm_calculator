@@ -1,8 +1,9 @@
+<div class="container">
 <% if @report.report_type == "fte" %>
   <h1>FTE Report Results</h1>
   <p>User: <%= @report.user.name %></p>
 
-  <div style="background-color: #f0f0f0; padding: 15px; margin-bottom: 20px; border-radius: 5px;">
+  <div class="info-box">
     <h3>How FTE is Calculated:</h3>
     <p>
       <strong>FTE Needed = (Incoming Requests per Hour × Average Resolution Time) ÷ Requests Completed per Employee per Hour</strong>
@@ -12,15 +13,17 @@
     </p>
   </div>
 
-  <h2>Parameters:</h2>
-  <ul>
-    <li>Incoming requests per hour: <%= @report.parameters["incoming_requests_per_hour"] %></li>
-    <li>Average resolution time per support request: <%= @report.parameters["average_resolution_time"] %> hours</li>
-    <li>Requests completed per employee per hour: <%= @report.parameters["requests_per_employee_per_hour"] %></li>
-  </ul>
+  <div class="results-section">
+    <h2>Parameters:</h2>
+    <ul>
+      <li>Incoming requests per hour: <%= @report.parameters["incoming_requests_per_hour"] %></li>
+      <li>Average resolution time per support request: <%= @report.parameters["average_resolution_time"] %> hours</li>
+      <li>Requests completed per employee per hour: <%= @report.parameters["requests_per_employee_per_hour"] %></li>
+    </ul>
 
-  <h2>Result:</h2>
-  <p><strong>You will need <%= @report.results["fte_needed"].round(2) %> Full-Time Employees</strong></p>
+    <h2>Result:</h2>
+    <p><strong>You will need <%= @report.results["fte_needed"].round(2) %> Full-Time Employees</strong></p>
+  </div>
 
   <h2>Scenario Analysis:</h2>
   <p>This table shows how many agents would be needed if your parameters change. Each column shows the impact of changing one parameter in isolation, plus a combined scenario where all parameters scale together.</p>
@@ -35,16 +38,16 @@
     multipliers = [0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5]
   %>
 
-  <div style="overflow-x: auto; margin-bottom: 20px;">
-    <table style="border-collapse: collapse; width: 100%; min-width: 1000px;">
+  <div class="table-wrapper">
+    <table>
       <thead>
-        <tr style="background-color: #4CAF50; color: white;">
-          <th style="border: 1px solid #ddd; padding: 12px; text-align: center;">Multiplier</th>
-          <th style="border: 1px solid #ddd; padding: 12px; text-align: center;">Incoming Requests Only<br><span style="font-weight: normal; font-size: 0.9em;">(others constant)</span></th>
-          <th style="border: 1px solid #ddd; padding: 12px; text-align: center;">Resolution Time Only<br><span style="font-weight: normal; font-size: 0.9em;">(others constant)</span></th>
-          <th style="border: 1px solid #ddd; padding: 12px; text-align: center;">Productivity Only<br><span style="font-weight: normal; font-size: 0.9em;">(others constant)</span></th>
-          <th style="border: 1px solid #ddd; padding: 12px; text-align: center;">Request & Resolution<br><span style="font-weight: normal; font-size: 0.9em;">(productivity constant)</span></th>
-          <th style="border: 1px solid #ddd; padding: 12px; text-align: center;">Request, Resolution, & Productivity</th>
+        <tr>
+          <th>Multiplier</th>
+          <th>Incoming Requests Only<br><span>(others constant)</span></th>
+          <th>Resolution Time Only<br><span>(others constant)</span></th>
+          <th>Productivity Only<br><span>(others constant)</span></th>
+          <th>Request & Resolution<br><span>(productivity constant)</span></th>
+          <th>Request, Resolution, & Productivity</th>
         </tr>
       </thead>
       <tbody>
@@ -58,24 +61,24 @@
             fte_all_combined = (incoming_requests * mult * resolution_time * mult) / (requests_per_employee * mult)
 
             # Highlight baseline row
-            row_style = mult == 1 ? "background-color: #ffffcc; font-weight: bold;" : ""
+            row_class = mult == 1 ? "baseline-row" : ""
           %>
-          <tr style="<%= row_style %>">
-            <td style="border: 1px solid #ddd; padding: 10px; text-align: center;"><%= mult %>x</td>
-            <td style="border: 1px solid #ddd; padding: 10px; text-align: center;"><%= fte_requests.round(2) %></td>
-            <td style="border: 1px solid #ddd; padding: 10px; text-align: center;"><%= fte_resolution.round(2) %></td>
-            <td style="border: 1px solid #ddd; padding: 10px; text-align: center;"><%= fte_productivity.round(2) %></td>
-            <td style="border: 1px solid #ddd; padding: 10px; text-align: center;"><%= fte_request_resolution.round(2) %></td>
-            <td style="border: 1px solid #ddd; padding: 10px; text-align: center;"><%= fte_all_combined.round(2) %></td>
+          <tr class="<%= row_class %>">
+            <td><%= mult %>x</td>
+            <td><%= fte_requests.round(2) %></td>
+            <td><%= fte_resolution.round(2) %></td>
+            <td><%= fte_productivity.round(2) %></td>
+            <td><%= fte_request_resolution.round(2) %></td>
+            <td><%= fte_all_combined.round(2) %></td>
           </tr>
         <% end %>
       </tbody>
     </table>
   </div>
 
-  <div style="background-color: #e7f3fe; padding: 15px; margin-bottom: 20px; border-radius: 5px; border-left: 4px solid #2196F3;">
-    <h4 style="margin-top: 0;">Understanding the Table:</h4>
-    <ul style="margin-bottom: 0;">
+  <div class="info-box-blue">
+    <h4>Understanding the Table:</h4>
+    <ul>
       <li><strong>Incoming Requests Only:</strong> Shows FTE needed if request volume changes (e.g., 2x = double the requests)</li>
       <li><strong>Resolution Time Only:</strong> Shows FTE needed if handling time changes (e.g., 2x = requests take twice as long)</li>
       <li><strong>Productivity Only:</strong> Shows FTE needed if employee efficiency changes (e.g., 2x = employees complete twice as many requests/hour)</li>
@@ -89,7 +92,7 @@
   <h1>Erlang C Staffing Model Results</h1>
   <p>User: <%= @report.user.name %></p>
 
-  <div style="background-color: #f0f0f0; padding: 15px; margin-bottom: 20px; border-radius: 5px;">
+  <div class="info-box">
     <h3>How Erlang C is Calculated:</h3>
     <p>
       <strong>The Erlang C model calculates the minimum number of agents needed to meet your service level target.</strong>
@@ -103,17 +106,19 @@
     </p>
   </div>
 
-  <h2>Parameters:</h2>
-  <ul>
-    <li>Call volume: <%= @report.parameters["call_volume"] %> calls per hour</li>
-    <li>Average Handling Time (AHT): <%= @report.parameters["average_handling_time"] %> seconds</li>
-    <li>Service Level Target: <%= @report.parameters["service_level_target"] %>%</li>
-    <li>Target Time: <%= @report.parameters["target_time"] %> seconds</li>
-  </ul>
+  <div class="results-section">
+    <h2>Parameters:</h2>
+    <ul>
+      <li>Call volume: <%= @report.parameters["call_volume"] %> calls per hour</li>
+      <li>Average Handling Time (AHT): <%= @report.parameters["average_handling_time"] %> seconds</li>
+      <li>Service Level Target: <%= @report.parameters["service_level_target"] %>%</li>
+      <li>Target Time: <%= @report.parameters["target_time"] %> seconds</li>
+    </ul>
 
-  <h2>Results:</h2>
-  <p><strong>You will need <%= @report.results["agents_needed"] %> Agents</strong></p>
-  <p>Traffic Intensity: <%= @report.results["traffic_intensity"].round(2) %> Erlangs</p>
+    <h2>Results:</h2>
+    <p><strong>You will need <%= @report.results["agents_needed"] %> Agents</strong></p>
+    <p>Traffic Intensity: <%= @report.results["traffic_intensity"].round(2) %> Erlangs</p>
+  </div>
 
   <h2>Scenario Analysis:</h2>
   <p>This table shows how many agents would be needed if your parameters change. Each column shows the impact of changing one parameter in isolation, plus a combined scenario where all parameters scale together.</p>
@@ -135,16 +140,16 @@
     step_size = (100.0 - service_level_target) / 8.0
   %>
 
-  <div style="overflow-x: auto; margin-bottom: 20px;">
-    <table style="border-collapse: collapse; width: 100%; min-width: 1000px;">
+  <div class="table-wrapper">
+    <table>
       <thead>
-        <tr style="background-color: #4CAF50; color: white;">
-          <th style="border: 1px solid #ddd; padding: 12px; text-align: center;">Multiplier</th>
-          <th style="border: 1px solid #ddd; padding: 12px; text-align: center;">Call Volume Only<br><span style="font-weight: normal; font-size: 0.9em;">(others constant)</span></th>
-          <th style="border: 1px solid #ddd; padding: 12px; text-align: center;">Avg Handling Time Only<br><span style="font-weight: normal; font-size: 0.9em;">(others constant)</span></th>
-          <th style="border: 1px solid #ddd; padding: 12px; text-align: center;">Service Level Target Only<br><span style="font-weight: normal; font-size: 0.9em;">(others constant)</span></th>
-          <th style="border: 1px solid #ddd; padding: 12px; text-align: center;">Target Time Only<br><span style="font-weight: normal; font-size: 0.9em;">(others constant)</span></th>
-          <th style="border: 1px solid #ddd; padding: 12px; text-align: center;">All Combined</th>
+        <tr>
+          <th>Multiplier</th>
+          <th>Call Volume Only<br><span>(others constant)</span></th>
+          <th>Avg Handling Time Only<br><span>(others constant)</span></th>
+          <th>Service Level Target Only<br><span>(others constant)</span></th>
+          <th>Target Time Only<br><span>(others constant)</span></th>
+          <th>All Combined</th>
         </tr>
       </thead>
       <tbody>
@@ -175,24 +180,24 @@
             agents_combined = calculate_erlang_agents(traffic_combined, sl_target_for_row / 100.0, target_time * mult, aht * mult)
 
             # Highlight baseline row
-            row_style = mult == 1 ? "background-color: #ffffcc; font-weight: bold;" : ""
+            row_class = mult == 1 ? "baseline-row" : ""
           %>
-          <tr style="<%= row_style %>">
-            <td style="border: 1px solid #ddd; padding: 10px; text-align: center;"><%= mult %>x</td>
-            <td style="border: 1px solid #ddd; padding: 10px; text-align: center;"><%= agents_call_volume %></td>
-            <td style="border: 1px solid #ddd; padding: 10px; text-align: center;"><%= agents_aht %></td>
-            <td style="border: 1px solid #ddd; padding: 10px; text-align: center;"><%= agents_sl_target %> <span style="color: #666; font-size: 0.85em;">(SL: <%= sl_target_for_row.round(1) %>%)</span></td>
-            <td style="border: 1px solid #ddd; padding: 10px; text-align: center;"><%= agents_target_time %></td>
-            <td style="border: 1px solid #ddd; padding: 10px; text-align: center;"><%= agents_combined %></td>
+          <tr class="<%= row_class %>">
+            <td><%= mult %>x</td>
+            <td><%= agents_call_volume %></td>
+            <td><%= agents_aht %></td>
+            <td><%= agents_sl_target %> <span class="text-muted">(SL: <%= sl_target_for_row.round(1) %>%)</span></td>
+            <td><%= agents_target_time %></td>
+            <td><%= agents_combined %></td>
           </tr>
         <% end %>
       </tbody>
     </table>
   </div>
 
-  <div style="background-color: #e7f3fe; padding: 15px; margin-bottom: 20px; border-radius: 5px; border-left: 4px solid #2196F3;">
-    <h4 style="margin-top: 0;">Understanding the Table:</h4>
-    <ul style="margin-bottom: 0;">
+  <div class="info-box-blue">
+    <h4>Understanding the Table:</h4>
+    <ul>
       <li><strong>Call Volume Only:</strong> Shows agents needed if call volume changes (e.g., 2x = double the calls)</li>
       <li><strong>Avg Handling Time Only:</strong> Shows agents needed if handling time changes (e.g., 2x = calls take twice as long)</li>
       <li><strong>Service Level Target Only:</strong> Shows agents needed if service level target changes (0.5x = baseline - 5%, 1x = baseline, 1.5x+ = incremental steps to 100%)</li>
@@ -204,7 +209,8 @@
 
 <% end %>
 
-<div style="margin: 20px 0;">
-  <%= link_to "Export as CSV", export_csv_report_path(@report), style: "display: inline-block; background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; margin-right: 10px;" %>
-  <%= link_to "Back to Home", root_path %>
+  <div class="action-links">
+    <%= link_to "Export as CSV", export_csv_report_path(@report), class: "btn-link" %>
+    <%= link_to "Back to Home", root_path %>
+  </div>
 </div>

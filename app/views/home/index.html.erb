@@ -1,15 +1,17 @@
-<h1>Workforce Management Calculator</h1>
+<div class="container">
+  <h1>Workforce Management Calculator</h1>
 
-<%= form_with url: new_report_path, method: :get, local: true do |form| %>
-  <div>
-    <%= form.label :user_id, "Select your user:" %>
-    <%= form.collection_select :user_id, @users, :id, :name, { prompt: "Select a user" } %>
-  </div>
+  <%= form_with url: new_report_path, method: :get, local: true do |form| %>
+    <div>
+      <%= form.label :user_id, "Select your user:" %>
+      <%= form.collection_select :user_id, @users, :id, :name, { prompt: "Select a user" } %>
+    </div>
 
-  <div>
-    <%= form.label :report_type, "Select report type:" %>
-    <%= form.select :report_type, @report_types.map { |type| [type.titleize, type] }, { prompt: "Select a report type" } %>
-  </div>
+    <div>
+      <%= form.label :report_type, "Select report type:" %>
+      <%= form.select :report_type, @report_types.map { |type| [type.titleize, type] }, { prompt: "Select a report type" } %>
+    </div>
 
-  <%= form.submit "Continue" %>
-<% end %>
+    <%= form.submit "Continue" %>
+  <% end %>
+</div>

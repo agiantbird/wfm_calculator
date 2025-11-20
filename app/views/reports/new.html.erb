@@ -1,8 +1,9 @@
+<div class="container">
 <% if @report_type == "fte" %>
   <h1>Full Time Employee (FTE) Report</h1>
   <p>User: <%= @user.name %></p>
 
-  <div style="background-color: #f0f0f0; padding: 15px; margin-bottom: 20px; border-radius: 5px;">
+  <div class="info-box">
     <h3>How FTE is Calculated:</h3>
     <p>
       <strong>FTE Needed = (Incoming Requests per Hour × Average Resolution Time) ÷ Requests Completed per Employee per Hour</strong>
@@ -40,7 +41,7 @@
   <h1>Erlang C Staffing Model Report</h1>
   <p>User: <%= @user.name %></p>
 
-  <div style="background-color: #f0f0f0; padding: 15px; margin-bottom: 20px; border-radius: 5px;">
+  <div class="info-box">
     <h3>How Erlang C is Calculated:</h3>
     <p>
       <strong>The Erlang C model calculates the minimum number of agents needed to meet your service level target.</strong>
@@ -71,13 +72,13 @@
     <div>
       <%= form.label :service_level_target, "Service Level Target (%):" %>
       <%= form.number_field :service_level_target, step: :any, required: true, placeholder: "e.g., 80" %>
-      <small style="display: block; color: #666;">Enter as percentage (e.g., 80 for 80%)</small>
+      <small>Enter as percentage (e.g., 80 for 80%)</small>
     </div>
 
     <div>
       <%= form.label :target_time, "Target Time (seconds):" %>
       <%= form.number_field :target_time, step: :any, required: true, placeholder: "e.g., 20" %>
-      <small style="display: block; color: #666;">Time within which calls should be answered</small>
+      <small>Time within which calls should be answered</small>
     </div>
 
     <div>
@@ -87,4 +88,5 @@
 
 <% end %>
 
-<%= link_to "Back to Home", root_path %>
+  <%= link_to "Back to Home", root_path %>
+</div>
