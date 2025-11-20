@@ -1,6 +1,8 @@
 Rails.application.routes.draw do
   root "home#index"
 
+  resources :users, only: [ :new, :create ]
+
   resources :reports, only: [ :new, :create, :show ] do
     member do
       get :export_csv

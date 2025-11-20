@@ -1,0 +1,26 @@
+<div class="container">
+  <h1>Create New User</h1>
+
+  <%= form_with model: @user, url: users_path, local: true do |form| %>
+    <% if @user.errors.any? %>
+      <div style="color: red">
+        <h2><%= pluralize(@user.errors.count, "error") %> prohibited this user from being saved:</h2>
+        <ul>
+          <% @user.errors.each do |error| %>
+            <li><%= error.full_message %></li>
+          <% end %>
+        </ul>
+      </div>
+    <% end %>
+
+    <div>
+      <%= form.label :name, "User Name:" %>
+      <%= form.text_field :name %>
+    </div>
+
+    <div>
+      <%= form.submit "Create User" %>
+      <%= link_to "Cancel", root_path %>
+    </div>
+  <% end %>
+</div>
